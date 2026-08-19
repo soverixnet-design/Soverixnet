@@ -1,0 +1,130 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email != null && request.auth.token.email == 'soverixnet@gmail.com') ||
+        (request.auth.token.email_verified == true && request.auth.token.email == 'soverixnet@gmail.com')
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation for UserProfile
+    function isValidUserProfile(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.email is string && data.email.size() <= 256 &&
+             data.plan is string && data.plan.size() <= 64 &&
+             (!('role' in data) || (data.role is string && (data.role == 'admin' || data.role == 'user'))) &&
+             (!('planPriceBDT' in data) || data.planPriceBDT is number) &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 128)) &&
+             (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 1024)) &&
+             (!('vipMasterKey' in data) || (data.vipMasterKey is string && data.vipMasterKey.size() <= 128)) &&
+             (!('status' in data) || (data.status is string && data.status.size() <= 32)) &&
+             (!('lastLoginAt' in data) || (data.lastLoginAt is string && data.lastLoginAt.size() <= 64)) &&
+             (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64)) &&
+             (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64));
+    }
+
+    // Validation for UserPreferences
+    function isValidUserPreferences(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.preferredProtocol is string && data.preferredProtocol.size() <= 32 &&
+             data.killSwitch is bool &&
+             data.cleanNetAdBlock is bool &&
+             (!('malwareShield' in data) || data.malwareShield is bool) &&
+             (!('stealthObfuscation' in data) || data.stealthObfuscation is bool) &&
+             (!('quantumSafeKyber' in data) || data.quantumSafeKyber is bool) &&
+             (!('dnsProvider' in data) || (data.dnsProvider is string && data.dnsProvider.size() <= 64)) &&
+             (!('favoriteServerIds' in data) || (data.favoriteServerIds is list && data.favoriteServerIds.size() <= 50)) &&
+             (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64));
+    }
+
+    // Validation for ConnectedDevice
+    function isValidConnectedDevice(data, userId, deviceId) {
+      return data.deviceId is string && data.deviceId == deviceId &&
+             data.userId is string && data.userId == userId &&
+             data.deviceName is string && data.deviceName.size() > 0 && data.deviceName.size() <= 128 &&
+             data.deviceType is string && data.deviceType.size() <= 32 &&
+             (!('virtualIp' in data) || (data.virtualIp is string && data.virtualIp.size() <= 64)) &&
+             (!('location' in data) || (data.location is string && data.location.size() <= 128)) &&
+             (!('activeSince' in data) || (data.activeSince is string && data.activeSince.size() <= 64)) &&
+             (!('lastSeen' in data) || (data.lastSeen is string && data.lastSeen.size() <= 64));
+    }
+
+    // Validation for ConnectionLog
+    function isValidConnectionLog(data, userId, logId) {
+      return data.logId is string && data.logId == logId &&
+             data.userId is string && data.userId == userId &&
+             data.serverNodeId is string && data.serverNodeId.size() <= 64 &&
+             data.protocol is string && data.protocol.size() <= 32 &&
+             (!('serverName' in data) || (data.serverName is string && data.serverName.size() <= 128)) &&
+             (!('connectedAt' in data) || (data.connectedAt is string && data.connectedAt.size() <= 64)) &&
+             (!('durationSeconds' in data) || data.durationSeconds is number) &&
+             (!('bytesDownloadedMB' in data) || data.bytesDownloadedMB is number) &&
+             (!('bytesUploadedMB' in data) || data.bytesUploadedMB is number);
+    }
+
+    // Users collection and subcollections
+    match /users/{userId} {
+      allow get: if (isOwner(userId) || isAdmin()) && isValidId(userId);
+      allow list: if isAdmin(); // Admin can see all registered users
+      allow create: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidUserProfile(incoming(), userId);
+      allow update: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidUserProfile(incoming(), userId);
+      allow delete: if (isOwner(userId) || isAdmin()) && isValidId(userId);
+
+      // Preferences Subcollection
+      match /preferences/{prefId} {
+        allow get: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidId(prefId);
+        allow list: if isOwner(userId) || isAdmin();
+        allow create: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidId(prefId) && isValidUserPreferences(incoming(), userId);
+        allow update: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidId(prefId) && isValidUserPreferences(incoming(), userId);
+        allow delete: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidId(prefId);
+      }
+
+      // Connected Devices Subcollection
+      match /devices/{deviceId} {
+        allow get: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidId(deviceId);
+        allow list: if isOwner(userId) || isAdmin();
+        allow create: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidId(deviceId) && isValidConnectedDevice(incoming(), userId, deviceId);
+        allow update: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidId(deviceId) && isValidConnectedDevice(incoming(), userId, deviceId);
+        allow delete: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidId(deviceId);
+      }
+
+      // Connection History Logs Subcollection
+      match /history/{logId} {
+        allow get: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidId(logId);
+        allow list: if isOwner(userId) || isAdmin();
+        allow create: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidId(logId) && isValidConnectionLog(incoming(), userId, logId);
+        allow update: if false; // Logs are append-only immutable
+        allow delete: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidId(logId);
+      }
+    }
+
+  }
+}

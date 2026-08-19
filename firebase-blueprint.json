@@ -1,0 +1,253 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile information, VIP subscription plan metadata, and RBAC role",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the user",
+          "maxLength": 128
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address",
+          "maxLength": 256
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name",
+          "maxLength": 128
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "URL of user avatar",
+          "maxLength": 1024
+        },
+        "role": {
+          "type": "string",
+          "description": "Role of user (admin or user)",
+          "enum": ["admin", "user"],
+          "maxLength": 32
+        },
+        "plan": {
+          "type": "string",
+          "description": "Subscription tier",
+          "enum": [
+            "Sovereign VIP Lifetime", 
+            "Cyber Pro 1-Year", 
+            "Gaming Turbo Monthly", 
+            "Quantum Elite Pass",
+            "Free Tier"
+          ],
+          "maxLength": 64
+        },
+        "planPriceBDT": {
+          "type": "number",
+          "description": "Plan pricing in Bangladeshi Taka"
+        },
+        "vipMasterKey": {
+          "type": "string",
+          "description": "Cryptographic client master key",
+          "maxLength": 128
+        },
+        "status": {
+          "type": "string",
+          "description": "Account status",
+          "enum": ["active", "suspended", "expired"],
+          "maxLength": 32
+        },
+        "lastLoginAt": {
+          "type": "string",
+          "description": "ISO timestamp of last login",
+          "maxLength": 64
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp of account creation",
+          "maxLength": 64
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last update",
+          "maxLength": 64
+        }
+      },
+      "required": ["userId", "email", "plan"]
+    },
+    "UserPreferences": {
+      "title": "UserPreferences",
+      "description": "Persistent user VPN security settings and preferred configurations",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID of the owning user",
+          "maxLength": 128
+        },
+        "preferredProtocol": {
+          "type": "string",
+          "description": "Default VPN protocol chosen by user",
+          "maxLength": 32
+        },
+        "killSwitch": {
+          "type": "boolean",
+          "description": "Whether kill switch is enabled"
+        },
+        "cleanNetAdBlock": {
+          "type": "boolean",
+          "description": "Whether ad and tracker blocking is enabled"
+        },
+        "malwareShield": {
+          "type": "boolean",
+          "description": "Whether phishing shield is enabled"
+        },
+        "stealthObfuscation": {
+          "type": "boolean",
+          "description": "Whether stealth obfuscation is enabled"
+        },
+        "quantumSafeKyber": {
+          "type": "boolean",
+          "description": "Whether NIST Kyber-1024 quantum protection is active"
+        },
+        "dnsProvider": {
+          "type": "string",
+          "description": "Selected DNS resolver option",
+          "maxLength": 64
+        },
+        "favoriteServerIds": {
+          "type": "array",
+          "description": "List of favorite server node IDs",
+          "items": {
+            "type": "string",
+            "maxLength": 64
+          }
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last settings update",
+          "maxLength": 64
+        }
+      },
+      "required": ["userId", "preferredProtocol", "killSwitch", "cleanNetAdBlock"]
+    },
+    "ConnectedDevice": {
+      "title": "ConnectedDevice",
+      "description": "Active registered device session authorized on user account",
+      "type": "object",
+      "properties": {
+        "deviceId": {
+          "type": "string",
+          "description": "Unique identifier for the device",
+          "maxLength": 128
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner UID",
+          "maxLength": 128
+        },
+        "deviceName": {
+          "type": "string",
+          "description": "Name or model of the device",
+          "maxLength": 128
+        },
+        "deviceType": {
+          "type": "string",
+          "description": "Type of client (pc, mobile, tv, router)",
+          "enum": ["pc", "mobile", "tv", "router"],
+          "maxLength": 32
+        },
+        "virtualIp": {
+          "type": "string",
+          "description": "Assigned virtual tunnel IP",
+          "maxLength": 64
+        },
+        "location": {
+          "type": "string",
+          "description": "Last active connected node location",
+          "maxLength": 128
+        },
+        "activeSince": {
+          "type": "string",
+          "description": "Timestamp or relative active time",
+          "maxLength": 64
+        },
+        "lastSeen": {
+          "type": "string",
+          "description": "ISO timestamp of last heartbeat",
+          "maxLength": 64
+        }
+      },
+      "required": ["deviceId", "userId", "deviceName", "deviceType"]
+    },
+    "ConnectionLog": {
+      "title": "ConnectionLog",
+      "description": "User VPN session connection diagnostic history",
+      "type": "object",
+      "properties": {
+        "logId": {
+          "type": "string",
+          "description": "Unique connection log identifier",
+          "maxLength": 128
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner UID",
+          "maxLength": 128
+        },
+        "serverNodeId": {
+          "type": "string",
+          "description": "ID of the VPN node used",
+          "maxLength": 64
+        },
+        "serverName": {
+          "type": "string",
+          "description": "Name of the VPN node",
+          "maxLength": 128
+        },
+        "protocol": {
+          "type": "string",
+          "description": "Protocol used (wireguard, v2ray, etc.)",
+          "maxLength": 32
+        },
+        "connectedAt": {
+          "type": "string",
+          "description": "ISO timestamp of connection start",
+          "maxLength": 64
+        },
+        "durationSeconds": {
+          "type": "number",
+          "description": "Length of connection in seconds"
+        },
+        "bytesDownloadedMB": {
+          "type": "number",
+          "description": "Megabytes received"
+        },
+        "bytesUploadedMB": {
+          "type": "number",
+          "description": "Megabytes transmitted"
+        }
+      },
+      "required": ["logId", "userId", "serverNodeId", "protocol"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Primary user profile document containing subscription, role, and user metadata"
+    },
+    "/users/{userId}/preferences/{prefId}": {
+      "schema": "UserPreferences",
+      "description": "Persistent security toggles, favorite servers, and protocol preferences"
+    },
+    "/users/{userId}/devices/{deviceId}": {
+      "schema": "ConnectedDevice",
+      "description": "Sub-collection of user authorized multi-device active sessions"
+    },
+    "/users/{userId}/history/{logId}": {
+      "schema": "ConnectionLog",
+      "description": "Sub-collection of user past VPN connection diagnostics and data usage"
+    }
+  }
+}
